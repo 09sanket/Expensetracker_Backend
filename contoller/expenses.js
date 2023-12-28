@@ -4,10 +4,13 @@ const sequelize = require("../util/database");
 const AWS = require('aws-sdk');
 require('dotenv').config();
 
-exports.addExpense = async(req, res)=>{
+// Function to add an expense
+exports.addExpense = async (req, res) => {
+    // Begin a transaction
     const t = await sequelize.transaction();
     try {
         const { amount, description, category } = req.body;
+        // Create a new expense record in the database
         const result = await Expenses.create({
             amount,
             description,
@@ -15,207 +18,163 @@ exports.addExpense = async(req, res)=>{
             userId: req.user.id,
         }, { transaction: t });
 
+        // Calculate the total expenses of the user
         const totalExpenses = Number(req.user.totalExpense) + Number(result.amount);
 
         // Update the user's totalExpense within the same transaction
         await Users.update({ totalExpense: totalExpenses }, { where: { id: req.user.id }, transaction: t });
 
+        // Commit the transaction
         await t.commit();
 
+        // Respond with the added expense details
         res.status(200).json({ expense: result });
     } catch (err) {
+        // Rollback the transaction in case of an error
         await t.rollback();
         console.log(err);
         res.status(500).json("Internal Error has happened");
     }
-
 }
 
-exports.download = async(req, res)=>{
-   try{
+// Function to download expense details
+exports.download = async (req, res) => {
+    try {
+        // Retrieve all expenses associated with the user
+        const expenses = await Expenses.findAll({
+            where: { userId: req.user.id },
+        });
 
-    const expenses = await Expenses.findAll({
-        where: { userId: req.user.id },
-    });
+        // Convert expenses to a string format
+        const stringyfyExpense = JSON.stringify(expenses);
 
-    
-     console.log(expenses);
-     const stringyfyExpense = JSON.stringify(expenses);
+        // Generate a unique filename for the user's expenses
+        const userId = req.user.id;
+        const filename = `Expense${userId}/${new Date()}.txt`;
 
-     const userId = req.user.id;
-     const filename = `Expense${userId}/${new Date()}.txt`;
-     const fileUrl = await uploadToS3(stringyfyExpense, filename);
-     res.status(200).json({fileUrl, success: true});
-   }catch(err){
-    console.log(err);
-    res.status(500).json({fileUrl:'', success: false, err:err});
-   }
+        // Upload the expenses data to AWS S3 and obtain the file URL
+        const fileUrl = await uploadToS3(stringyfyExpense, filename);
+
+        // Respond with the URL for downloading the file
+        res.status(200).json({ fileUrl, success: true });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ fileUrl: '', success: false, err: err });
+    }
 }
 
+// Function to upload data to AWS S3
 function uploadToS3(data, filename){
-    const BUCKET_NAME= process.env.BUCKET_NAME;
+    // Retrieve AWS S3 credentials from environment variables
+    const BUCKET_NAME = process.env.BUCKET_NAME;
     const IAM_USER_KEY = process.env.IAM_USER_KEY;
     const IAM_USER_SECRET = process.env.IAM_USER_SECRET;
 
+    // Set up AWS S3 configuration using credentials and bucket name
     let s3bucket = new AWS.S3({
-        accessKeyId :IAM_USER_KEY ,
+        accessKeyId: IAM_USER_KEY,
         secretAccessKey: IAM_USER_SECRET,
         Bucket: BUCKET_NAME
-
     });
-    var params ={
-        Bucket : BUCKET_NAME,
+
+    // Define parameters for S3 upload
+    var params = {
+        Bucket: BUCKET_NAME,
         Body: data,
         Key: filename,
         ACL: 'public-read'
+    };
 
-    }
-    return new Promise((resolve, reject)=>{
-        s3bucket.upload(params, (err, s3response)=>{
-            if(err){
-                console.log('something is wrong');
+    // Return a Promise for S3 file upload
+    return new Promise((resolve, reject) => {
+        // Upload data to AWS S3 bucket
+        s3bucket.upload(params, (err, s3response) => {
+            if (err) {
+                console.log('Error occurred during S3 upload');
                 reject(err);
+            } else {
+                // Resolve with the URL of the uploaded file in S3
+                resolve(s3response.Location);
             }
-            else{
-               resolve(s3response.Location);
-            }
-        })
-    })
-   
+        });
+    });
 }
-async function download() {
+
+// Retrieve and paginate expenses
+exports.getExpense = async(req, res) => {
     try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3100/user/download', { headers: { "Authorization": token } });
-        if (response.status === 200) {
-            var a = document.createElement("a");
-            a.href = response.data.fileURL;
-            a.download = 'myexpense.csv';
-            a.click();
-        } else {
-            throw new Error(response.data.message)
-        }
+        const page = req.query.page ? parseInt(req.query.page) : 1;
+        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+        const offset = (page - 1) * limit;
+
+        // Count total number of expenses
+        const totalCount = await Expenses.count(/*whereClause*/);
+
+        // Retrieve expenses based on pagination parameters
+        const expenses = await Expenses.findAll({
+            offset,
+            limit,
+        });
+
+        // Calculate total pages based on pagination limit
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Respond with paginated expenses and total count
+        res.status(200).json({
+            expenses,
+            totalCount,
+            totalPages
+        });
     } catch (err) {
         console.log(err);
-        exForm.innerHTML += `<div style="color:red;"> ${err}</div>`
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 }
-var count=1;
-async function showhistory(myobj)
-{
-    try{
-       
-        const addNewelem=document.createElement('li');
-        addNewelem.className=" text-truncate list-group-item bg-light";
-        const text=document.createTextNode(count++ +"."+myobj.url+"-"+myobj.createdAt);
-        addNewelem.appendChild(text);
-        historyList.appendChild(addNewelem);
-    }
-    catch(error){
-        console.log(error)
-    };
-}
 
-async function paymentfunc(e){
-    const token=localStorage.getItem('token');
-    const response=await axios.get(`http://localhost:3100/purchase/premiummembership`,{headers:{"Authorization":token}});
-    var options={
-        "key":response.data.key_id,
-        "order_id":response.data.order.id,
-        "handler":async function(response){
-           const res= await axios.post(`http://localhost:3100/purchase/updatetrstatus`,{
-            order_id:options.order_id,
-            payment_id:response.razorpay_payment_id},
-            {headers:{"Authorization":token}})
-            console.log(res);
-            alert('You are a Premium User Now');
-            preUser.style.display='block';
-            historyList.style.display='block';
-            nonpreuser.style.display='none';
-            localStorage.setItem('token',res.data.token);
-        }
-    };
-    const rzp1=new Razorpay(options);
-    rzp1.open();
-    e.preventDefault();
+exports.deleteExpense = async (req, res) => {
+    const t = await sequelize.transaction(); // Begin a transaction
 
-    rzp1.on('payment.failed',async function(response){
-            await axios.post(`http://localhost:3100/purchase/updatetrstatus`,{
-            order_id:options.order_id,
-            payment_id:response.razorpay_payment_id},
-            {headers:{"Authorization":token}})
-            alert('Something went wrong');
-    })
+    const Id = req.params.id; // Retrieve the expense ID from the request parameters
 
-}
-
-
-exports.getExpense = async(req, res)=>{
-
-try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-
-    const offset = (page - 1) * limit;
-
-
-    const totalCount = await Expenses.count(/*whereClause*/);
-
-    const expenses = await Expenses.findAll({
-        offset,
-        limit,
-    });
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    res.status(200).json({
-        expenses,
-        totalCount,
-        totalPages
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: 'Internal Server Error' });
-}
-}
-
-exports.deleteExpense = async(req, res)=>{
-    const t = await sequelize.transaction();
-    const Id = req.params.id;
     try {
         // Find the expense being deleted to retrieve its amount
         const expense = await Expenses.findOne({
-            where: { id: Id, userId: req.user.id },
-            transaction: t,
+            where: { id: Id, userId: req.user.id }, // Search for the expense using ID and user ID
+            transaction: t, // Associate with the ongoing transaction
         });
 
         if (!expense) {
+            // If the expense is not found or doesn't belong to the user, return a 404 response
+            console.log(`Expense with ID ${Id} not found for user ${req.user.id}`);
             res.status(404).json('This expense does not belong to you.');
-            await t.rollback();
+            await t.rollback(); // Rollback the transaction
             return;
         }
 
-        // Delete the expense
+        // Delete the expense matching the provided ID and user ID
         await Expenses.destroy({
             where: { id: Id, userId: req.user.id },
-            transaction: t,
+            transaction: t, // Associate with the ongoing transaction
         });
 
-        // Update the user's totalExpense
+        // Calculate the updated totalExpense for the user by deducting the deleted expense amount
         const totalExpense = Number(req.user.totalExpense) - Number(expense.amount);
+
+        // Update the user's totalExpense in the Users model
         await Users.update(
-            { totalExpense: totalExpense },
-            { where: { id: req.user.id }, transaction: t }
+            { totalExpense: totalExpense }, // Set the new totalExpense value
+            { where: { id: req.user.id }, transaction: t } // Update for the specific user and associate with the ongoing transaction
         );
 
         // Commit the transaction since everything was successful
-        await t.commit();
+        await t.commit(); // Commit the transaction changes
 
+        // Respond with a success message after successfully deleting the expense
         res.status(200).json('Deleted');
     } catch (err) {
-        console.log(err);
+        console.error(err); // Log the error for debugging purposes
         // Rollback the transaction in case of an error
-        await t.rollback();
-        res.status(500).json('Internal Server Error');
+        await t.rollback(); // Rollback the transaction changes
+        res.status(500).json('Internal Server Error'); // Respond with a 500 error status
     }
 }

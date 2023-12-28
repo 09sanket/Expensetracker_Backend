@@ -1,21 +1,20 @@
-// const Sequelize = require('sequelize');
-
-// require('dotenv').config();
-
-// const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-//     host: process.env.DB_HOST,
-//     dialect: process.env.DB_DIALECT
-// });
-
-// module.exports = sequelize;
 
 
-const Sequelize=require('sequelize');
-require('dotenv').config();
 
-const sequelize=new Sequelize('exprensetracker',process.env.DB_USERNAME,process.env.DB_PASSWORD,{
-    dialect:'mysql',
-    host:'localhost' 
-});
 
-module.exports=sequelize; 
+// Importing necessary dependencies
+const Sequelize = require('sequelize');
+require('dotenv').config(); // Loading environment variables from .env file
+
+// Creating a Sequelize instance with database configurations
+const sequelize = new Sequelize(
+    'exprensetracker',          // Database name
+    process.env.DB_USERNAME,    // Username fetched from environment variables
+    process.env.DB_PASSWORD,    // Password fetched from environment variables
+    {
+        dialect: 'mysql',       // Database dialect (MySQL in this case)
+        host: 'localhost'       // Database host (localhost)
+    }
+);
+
+module.exports = sequelize;    // Exporting the Sequelize instance for use in other files

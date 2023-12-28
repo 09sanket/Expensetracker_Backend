@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Meta tags -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- External stylesheet -->
     <link rel="stylesheet" href="../public/login.css" />
+    <!-- Axios library CDN -->
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
       integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     ></script>
-
-    <title>login</title>
+    <title>Login</title>
   </head>
   <body>
+    <!-- Login form container -->
     <div class="container">
       <h2>Login</h2>
+      <!-- Login form -->
       <form id="form">
         <input
           type="email"
@@ -34,47 +38,58 @@
         <button type="submit">Login</button>
       </form>
 
+      <!-- Forgot password link -->
       <div class="forgot-password-link">
+        <!-- Link to forgot password page -->
         <a href="forgetPassword.html" style="color: white; text-decoration: none;">Forget Password?</a>
       </div>
 
+      <!-- Signup link -->
       <div class="signup-link">
         Don't have an account? <a href="signup.html">Sign Up</a>
       </div>
+      <!-- Response message display area -->
       <p id="responseMessage" style="color: red"></p>
     </div>
 
     <script>
+      // Selecting form and response message elements
       const form = document.querySelector("#form");
       const Messsage = document.querySelector("#responseMessage");
+
+      // Event listener for form submission
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        // Retrieving email and password from the form
         const email = document.querySelector("#email").value;
         const password = document.querySelector("#password").value;
 
+        // Creating an object with email and password
         const inputs = {
           email,
           password,
         };
         try {
+          // Sending POST request to login endpoint
           const response = await axios.post(
             "http://localhost:8080/add/login",
             inputs
           );
-          alert(response.data.message);
+          alert(response.data.message); // Displaying success message
           console.log(response);
-          localStorage.setItem("token", response.data.token);
-          Messsage.innerText = response.data;
+          localStorage.setItem("token", response.data.token); // Storing token in local storage
+          Messsage.innerText = response.data; // Displaying success message in the response area
           Messsage.style.color = "green";
 
-          // Redirect to a new page after successful login
+          // Redirecting to home page after successful login
           window.location.href = "home.html";
         } catch (err) {
+          // Handling errors if any
           if (err.response && err.response.data) {
-            Messsage.innerText = err.response.data;
+            Messsage.innerText = err.response.data; // Displaying error response
             Messsage.style.color = "red";
           } else {
-            Messsage.innerText = "error occured please try again later";
+            Messsage.innerText = "Error occurred. Please try again later."; // Generic error message
             Messsage.style.color = "red";
           }
         }

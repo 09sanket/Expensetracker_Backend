@@ -1,13 +1,13 @@
-const express = require('express');
-const router = express.Router();
+const express = require('express'); // Importing Express framework
+const router = express.Router(); // Creating an instance of Express router
 
-const usersContoller = require('../contoller/users');
-const expenseController = require('../contoller/expenses');
-const Authentication = require('../middleware/auth');
+const usersContoller = require('../contoller/users'); // Importing user controller
+const expenseController = require('../contoller/expenses'); // Importing expense controller
+const Authentication = require('../middleware/auth'); // Importing authentication middleware
 
-router.post('/signUp', usersContoller.signUp);
-router.post("/login", usersContoller.login);
-router.get('/get-user',Authentication.Authenticate, usersContoller.isPremium);
-router.get('/download', Authentication.Authenticate, expenseController.download);
+router.post('/signUp', usersContoller.signUp); // Route to handle user sign up
+router.post("/login", usersContoller.login); // Route to handle user login
+router.get('/get-user', Authentication.Authenticate, usersContoller.isPremium); // Route to fetch user details, requires authentication
+router.get('/download', Authentication.Authenticate, expenseController.download); // Route to download expenses, requires authentication
 
-module.exports = router;
+module.exports = router; // Exporting the configured router

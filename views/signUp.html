@@ -1,58 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Axios library CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js" integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- External stylesheet -->
     <link rel="stylesheet" href="../public/signUp.css">
-    <title>signUp</title>
+    <title>Sign Up</title>
 </head>
 <body>
+    <!-- Container for sign-up form -->
     <div class="container">
         <h2>Sign Up</h2>
+        <!-- Sign-up form -->
         <form  id="form">
             <input type="text" id="name" name="name" placeholder="Name" required>
             <input type="email" id="email" name="email" placeholder="Email" required>
             <input type="password" id="password" name="password" placeholder="Password" required>
             <button type="submit">Sign Up</button>
         </form>
+        <!-- Error message display area -->
         <div class="error-message" style="color: red;"></div>
+        <!-- Link to login page for existing users -->
         <div class="login-link">
             Already have an account? <a href="login.html">Login</a>
         </div>
     </div>
+    <!-- Axios script -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> 
     <script>
-       
+       // Selecting form and error message elements
        const form = document.querySelector('#form');
-       const errorMsg = document.querySelector('.error-message')
-       form.addEventListener("submit", async(event)=>{
-        event.preventDefault();
-        const name = document.querySelector('#name').value;
-        const email = document.querySelector('#email').value;
-        const password = document.querySelector('#password').value;
-     
-        const inputs ={
-            name,
-            email,
-            password
-        }
+       const errorMsg = document.querySelector('.error-message');
 
-        try{
-            const response = await axios.post("http://localhost:8080/add/signUp", inputs);
-            console.log(response.data);
-          // Redirect to login page after successful signup
-          window.location.href = "login.html";
-        }catch(error){
-            if (error.response && error.response.status === 400) {
-                    errorMsg.textContent = error.response.data.error;
+       // Event listener for form submission
+       form.addEventListener("submit", async(event)=>{
+            event.preventDefault();
+            // Retrieving input values from the form
+            const name = document.querySelector('#name').value;
+            const email = document.querySelector('#email').value;
+            const password = document.querySelector('#password').value;
+         
+            // Creating an object with user details
+            const inputs ={
+                name,
+                email,
+                password
+            }
+
+            try{
+                // Sending a POST request to sign up endpoint
+                const response = await axios.post("http://localhost:8080/add/signUp", inputs);
+                console.log(response.data);
+                // Redirect to login page after successful signup
+                window.location.href = "login.html";
+            } catch(error) {
+                // Handling errors if any
+                if (error.response && error.response.status === 400) {
+                    errorMsg.textContent = error.response.data.error; // Displaying specific error from the response
                 } else {
-                    errorMsg.textContent = "An error occurred. Please try again later.";
+                    errorMsg.textContent = "An error occurred. Please try again later."; // Generic error message
                 }
-        }
-       
-       })
-       form.reset();
+            }
+       });
+       form.reset(); // Resetting the form after submission
 
     </script>
 </body>
