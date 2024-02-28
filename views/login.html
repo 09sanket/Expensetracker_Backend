@@ -54,47 +54,51 @@
 
     <script>
       // Selecting form and response message elements
-      const form = document.querySelector("#form");
-      const Messsage = document.querySelector("#responseMessage");
+const form = document.querySelector("#form"); // Selecting the form element
+const Messsage = document.querySelector("#responseMessage"); // Selecting the response message area
 
-      // Event listener for form submission
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        // Retrieving email and password from the form
-        const email = document.querySelector("#email").value;
-        const password = document.querySelector("#password").value;
+// Event listener for form submission
+form.addEventListener("submit", async (event) => {
+  event.preventDefault(); // Preventing the default form submission behavior
 
-        // Creating an object with email and password
-        const inputs = {
-          email,
-          password,
-        };
-        try {
-          // Sending POST request to login endpoint
-          const response = await axios.post(
-            "http://localhost:8080/add/login",
-            inputs
-          );
-          alert(response.data.message); // Displaying success message
-          console.log(response);
-          localStorage.setItem("token", response.data.token); // Storing token in local storage
-          Messsage.innerText = response.data; // Displaying success message in the response area
-          Messsage.style.color = "green";
+  // Retrieving email and password from the form
+  const email = document.querySelector("#email").value;
+  const password = document.querySelector("#password").value;
 
-          // Redirecting to home page after successful login
-          window.location.href = "home.html";
-        } catch (err) {
-          // Handling errors if any
-          if (err.response && err.response.data) {
-            Messsage.innerText = err.response.data; // Displaying error response
-            Messsage.style.color = "red";
-          } else {
-            Messsage.innerText = "Error occurred. Please try again later."; // Generic error message
-            Messsage.style.color = "red";
-          }
-        }
-      });
+  // Creating an object with email and password
+  const inputs = {
+    email,
+    password,
+  };
 
+  try {
+    // Sending POST request to login endpoint
+    const response = await axios.post(
+      "http://localhost:8080/add/login",
+      inputs
+    );
+
+    alert(response.data.message); // Displaying success message
+    console.log(response);
+    localStorage.setItem("token", response.data.token); // Storing token in local storage
+    Messsage.innerText = response.data; // Displaying success message in the response area
+    Messsage.style.color = "green";
+
+    // Redirecting to home page after successful login
+    window.location.href = "home.html";
+  } catch (err) {
+    // Handling errors if any
+
+    if (err.response && err.response.data) {
+      Messsage.innerText = err.response.data; // Displaying error response
+      Messsage.style.color = "red";
+    } else {
+      Messsage.innerText =
+        "Error occurred. Please try again later."; // Generic error message
+      Messsage.style.color = "red";
+    }
+  }
+});
     </script>
   </body>
 </html>

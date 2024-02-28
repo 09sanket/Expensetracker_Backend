@@ -4,6 +4,20 @@ const sequelize = require("../util/database");
 const AWS = require('aws-sdk');
 require('dotenv').config();
 
+// Dependencies Import:
+
+// Expenses and Users models are imported from their respective files.
+// sequelize is imported, which represents the configured Sequelize instance.
+// AWS (Amazon Web Services) SDK is imported, enabling interaction with various AWS services.
+// AWS SDK Initialization:
+
+// require('dotenv').config() loads environment variables from a .env file, enabling access to sensitive AWS configuration details without hardcoding them in the codebase.
+// The use of AWS SDK suggests that the application might interact with various AWS services like S3 for storage, SES for sending emails, or other AWS services based on the requirements of the application. The initialization of the AWS SDK sets the foundation for utilizing these services within the application
+
+
+
+
+
 // Function to add an expense
 exports.addExpense = async (req, res) => {
     // Begin a transaction
@@ -37,12 +51,40 @@ exports.addExpense = async (req, res) => {
     }
 }
 
+// Transaction Handling:
+
+// It starts a transaction t using sequelize.transaction() to ensure atomicity and consistency in database operations. If any part of the operation fails, the entire transaction can be rolled back.
+// Expense Creation:
+
+// It extracts amount, description, and category from the request body to create a new expense record in the database using Expenses.create().
+// The userId field is linked to the authenticated user (req.user.id).
+// Updating User's Total Expenses:
+
+// It calculates the total expenses of the user by adding the current expense's amount to the user's existing totalExpense.
+// Then, it updates the totalExpense field for the user in the Users model using Users.update() within the same transaction.
+// Transaction Management:
+
+// Upon successful addition and update, the transaction is committed (t.commit()).
+// In case of an error, the transaction is rolled back to maintain data integrity (t.rollback()).
+// Response:
+
+// It responds with the added expense details in a JSON format.
+
+
+
+
 // Function to download expense details
 exports.download = async (req, res) => {
     try {
         // Retrieve all expenses associated with the user
         const expenses = await Expenses.findAll({
             where: { userId: req.user.id },
+
+//     Expenses seems to represent a Sequelize model (assuming it's defined in your code) that represents the table or collection for expenses in your database.
+
+// findAll is a Sequelize function used to retrieve multiple records from the database based on specified criteria.
+
+// where: { userId: req.user.id } is a query condition defined using Sequelize's where clause. It indicates that Sequelize should find all records in the Expenses table where the userId column matches the id of the authenticated user making the request (req.user.id).
         });
 
         // Convert expenses to a string format
@@ -62,6 +104,29 @@ exports.download = async (req, res) => {
         res.status(500).json({ fileUrl: '', success: false, err: err });
     }
 }
+
+// This function download handles the generation and upload of expenses associated with a user to an AWS S3 bucket:
+
+// Fetching User Expenses:
+
+// It retrieves all expenses associated with the authenticated user from the database using Expenses.findAll().
+
+// Data Conversion and File Generation:
+
+// Converts the fetched expenses into a string format using JSON.stringify(expenses).
+// Generates a unique filename for the expenses file based on the user's ID and the current timestamp.
+// AWS S3 Upload:
+
+// Calls the uploadToS3 function (not shown) passing the stringified expenses and the generated filename. This function likely utilizes the AWS SDK (AWS.S3) to upload the expenses data to an S3 bucket.
+// Response:
+
+// If successful, responds with a JSON object containing the fileUrl where the file can be downloaded and a success status set to true.
+// If an error occurs during the process, it logs the error, responds with an empty fileUrl, and sets success to false, along with the specific error in the response.
+
+
+
+
+
 
 // Function to upload data to AWS S3
 function uploadToS3(data, filename){
@@ -99,6 +164,24 @@ function uploadToS3(data, filename){
         });
     });
 }
+// This function, uploadToS3, handles the uploading of data to an AWS S3 bucket:
+
+// Fetching AWS Credentials:
+
+// Retrieves the necessary AWS S3 credentials from environment variables (BUCKET_NAME, IAM_USER_KEY, IAM_USER_SECRET).
+// AWS S3 Configuration:
+
+// Sets up the AWS S3 configuration using the retrieved credentials and bucket name by creating an instance of AWS.S3 with the specified access key ID, secret access key, and bucket name.
+// S3 Upload Parameters:
+
+// Defines parameters required for S3 upload, including the bucket name, data to be uploaded (Body), filename (Key), and access control settings (ACL).
+// S3 Upload Process:
+
+// Initiates an upload to the AWS S3 bucket using s3bucket.upload.
+// It returns a Promise, either resolving with the URL (s3response.Location) of the uploaded file in the S3 bucket if successful or rejecting with an error if any occurs during the upload process.
+
+
+
 
 // Retrieve and paginate expenses
 exports.getExpense = async(req, res) => {
@@ -130,6 +213,29 @@ exports.getExpense = async(req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
+// This function getExpense retrieves and paginates expenses:
+
+// Pagination Parameters:
+
+// Parses the page and limit query parameters from the request or sets default values (page=1 and limit=10 if not provided).
+// Calculates the offset based on the current page and limit to determine where to start fetching the expenses.
+// Total Count of Expenses:
+
+// Counts the total number of expenses in the database, considering any optional conditions specified in the whereClause.
+// Retrieving Paginated Expenses:
+
+// Retrieves expenses from the database based on the pagination parameters (offset and limit) using Expenses.findAll.
+// Calculating Total Pages:
+
+// Determines the total number of pages required for pagination based on the total count of expenses and the specified limit.
+// Response:
+
+// Responds with a JSON object containing the paginated expenses (expenses), the total count of expenses (totalCount), and the calculated total pages (totalPages).
+
+
+
+
 
 exports.deleteExpense = async (req, res) => {
     const t = await sequelize.transaction(); // Begin a transaction
@@ -178,3 +284,33 @@ exports.deleteExpense = async (req, res) => {
         res.status(500).json('Internal Server Error'); // Respond with a 500 error status
     }
 }
+
+
+
+// This deleteExpense function handles the deletion of an expense:
+
+// Transaction Initialization:
+
+// Initiates a Sequelize transaction (t) to ensure atomicity of multiple database operations.
+// Expense Identification:
+
+// Retrieves the expense ID from the request parameters (req.params.id).
+// Finds the expense to be deleted, associated with the authenticated user, using the expense ID and user ID.
+// Expense Verification:
+
+// Checks if the expense exists and belongs to the user. If not found or not associated with the user, it returns a 404 response and rolls back the transaction.
+// Expense Deletion:
+
+// Deletes the expense from the Expenses model based on the expense ID and user ID.
+// Total Expense Update:
+
+// Calculates the updated totalExpense of the user by subtracting the deleted expense's amount from the current totalExpense.
+// Updates the totalExpense for the user in the Users model.
+// Transaction Management:
+
+// Commits the transaction if all operations are successful.
+// Rolls back the transaction in case of any errors during the deletion or update processes.
+// Response:
+
+// Responds with a success message upon successful deletion of the expense.
+// Provides appropriate error handling and status codes (500 for server error, 404 for not found) when necessary.

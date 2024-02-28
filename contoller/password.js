@@ -1,9 +1,40 @@
-const Users = require('../models/users');
+const Users = require('../models/users'); // Importing Users model
 const Password = require('../models/Password'); // Importing Password model
 const Sib = require('sib-api-v3-sdk'); // Importing the Sendinblue API library
-const uuid = require('uuid');
-const bcrypt = require('bcrypt');
-require('dotenv').config();
+const uuid = require('uuid'); // Importing UUID library for generating unique identifiers
+const bcrypt = require('bcrypt'); // Importing bcrypt for password hashing
+require('dotenv').config(); // Loading environment variables from .env file
+
+// Model Imports:
+
+// Users and Password are being imported from their respective model files (../models/users, ../models/Password).
+// API and Libraries:
+
+// Sib library is imported, likely related to the Sendinblue API. This library enables interaction with Sendinblue services.
+// uuid library is used for generating unique identifiers (UUIDs).
+// bcrypt library is imported for password hashing, a common technique to securely store passwords.
+// Environment Variables:
+
+// dotenv is used to load environment variables from a .env file, allowing secure storage of sensitive data like API keys, passwords, etc.
+
+
+// Questions to Consider:
+
+// Purpose of Sendinblue Integration: How is the Sendinblue library used within the application? For sending emails, managing templates, or other functionalities?
+// Sendinblue Integration:
+// Sendinblue library might be used for sending transactional emails or managing email campaigns, such as sending notifications, newsletters, or verification emails to users.
+
+// Password Handling: How are passwords hashed using bcrypt, and what functions/modules utilize this for user authentication?
+// Password Handling with bcrypt:
+// bcrypt is likely used to hash passwords before storing them in the database, ensuring security. It's often used in user authentication processes to compare hashed passwords during login.
+
+// UUID Generation: In what scenarios are UUIDs generated and utilized within the application?
+// UUID Generation:
+// UUIDs are commonly generated and utilized for unique identifiers in scenarios like creating unique tokens for password reset links, generating unique session IDs, or ensuring unique IDs for certain database entries to avoid conflicts.
+
+
+
+
 
 // Endpoint to handle the 'forgot password' functionality
 exports.forgetPassword = async (req, res) => {
@@ -58,6 +89,28 @@ exports.forgetPassword = async (req, res) => {
 };
 
 
+
+
+// This code snippet represents an endpoint (forgetPassword) responsible for the "forgot password" functionality in an application. Here's a breakdown:
+
+// Sendinblue Initialization: Initializes the Sendinblue API client using the provided API key fetched from environment variables.
+
+// Request Data: Extracts the email from the request body submitted by the user.
+
+// User Validation: Searches for a user with the provided email in the database. If no user is found, it returns a 404 error indicating that the email is not registered.
+
+// Password Reset Request: Generates a unique ID using UUID for the password reset request and creates an entry in the Password model to store this request with the associated user ID.
+
+// Construct Email Content: Constructs an email content containing a password reset link based on the generated ID. This link is embedded in an anchor tag (<a>) leading to a route for resetting the password.
+
+// Send Email: Uses Sendinblue's API to configure and send an email to the user's provided email address. The email contains the password reset link.
+
+// Response Handling: If the email is sent successfully, it responds with a 200 status and a message indicating that the reset password link has been sent. In case of any errors during this process, it catches the error, logs it, and responds with a 500 status, indicating a failure to send the reset password link.
+
+
+
+
+
 // Endpoint to render the password reset form with HTML content
 exports.resetPassword = async(req, res)=>{
     try {
@@ -98,6 +151,21 @@ exports.resetPassword = async(req, res)=>{
     }
 };
 
+// Request Parameter Extraction: Retrieves the unique id parameter from the request URL (req.params.id). This ID is used to identify the password reset request.
+
+// Database Lookup: Queries the database using Sequelize to find the password reset request associated with the provided ID.
+
+// Update Password Reset Request: If the password reset request exists, it updates the 'active' status to false, indicating that the request has been used.
+
+// HTML Form Content: Generates an HTML form within a string variable (html). The form contains an input field for the new password and a button to submit the form.
+
+// Form Submission: Defines a JavaScript function (formsubmitted) within the HTML content to handle form submission. However, this function does not have any functionality defined other than logging.
+
+// Sending HTML Response: Sends the HTML content (html) as a response when this endpoint is accessed. It responds with a 200 status code, rendering the password reset form in the browser.
+
+
+
+
 // Endpoint to handle the password update process
 exports.updatePassword = async (req, res)=>{
     try {
@@ -122,3 +190,18 @@ exports.updatePassword = async (req, res)=>{
         console.log(err);
     }
 };
+
+// Request Parsing: Retrieves the newpassword from the query parameters (req.query) and the id from the request parameters (req.params).
+
+// Database Queries:
+
+// Finds the password reset request in the database using Sequelize based on the provided id.
+// Retrieves the user associated with the password reset request using the userId stored in the reset request.
+// Password Reset Process:
+
+// If the user exists:
+// Hashes the new password using bcrypt.hash.
+// Updates the user's password with the hashed password.
+// Responds with a success message upon successful password reset (res.status(200).json("password reset successfully")).
+// If no user is found, it returns an error response indicating that no user exists (res.status(500).json({ error: 'No user Exists', success: false })).
+// Error Handling: Contains a basic try...catch block to catch and log any errors that might occur during the password reset process.

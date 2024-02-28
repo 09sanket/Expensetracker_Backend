@@ -138,6 +138,10 @@ async function fetchExpenses(page) {
 // Function to update pagination UI based on current page and total expenses
 function updatePaginationUI() {
     const totalPage = Math.ceil(totalExpense / itemPerPage); // Calculate total pages based on total expenses and items per page
+
+    // The Math.ceil() function is used to round a number to the nearest whole number greater than or equal to the given number.
+
+
     const pageInfo = document.createElement('div'); // Create a div element for displaying page information
     pageInfo.className = 'page-info'; // Assign a class for styling
     pageInfo.innerHTML = `page: ${currentPage} of ${totalPage}`; // Display current page and total pages

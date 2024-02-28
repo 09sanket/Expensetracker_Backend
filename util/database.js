@@ -18,3 +18,13 @@ const sequelize = new Sequelize(
 );
 
 module.exports = sequelize;    // Exporting the Sequelize instance for use in other files
+
+
+// Sequelize Import: Importing the Sequelize library required to create a Sequelize instance for database operations.
+// dotenv Configuration: Loading environment variables from a .env file using dotenv for sensitive data like database credentials.
+// Sequelize Instance Creation: Creating a new Sequelize instance with database configurations. It includes:
+// Database name: 'exprensetracker'
+// Username and password fetched from environment variables (process.env.DB_USERNAME and process.env.DB_PASSWORD respectively)
+// Database dialect set to 'mysql' for MySQL database
+// Database host set to 'localhost'
+// Exporting Sequelize Instance: Exporting the configured Sequelize instance to make it available for use in other files within your application.
